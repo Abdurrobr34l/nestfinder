@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router"
 import { useAuth } from "./Hooks/useAuth"
-import { Contact, Home } from "lucide-react"
+import { Contact } from "lucide-react"
+import Home from "./Pages/Home"
 import Explore from "./Pages/Explore"
 import PropertyDetails from "./Pages/PropertyDetails"
 import About from "./Pages/About"

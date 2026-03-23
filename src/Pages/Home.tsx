@@ -1,5 +1,12 @@
-const Home = () => {
-  return <div>Home</div>;
-};
+import Navbar from "../Components/Layout/Navbar"
 
-export default Home;
+const Home = () => {
+  return (
+    <div>
+      <Navbar />
+      <div className="p-8 text-gray-800 dark:text-white">Home Page</div>
+    </div>
+  )
+}
+
+export default Home
