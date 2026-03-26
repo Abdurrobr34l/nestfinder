@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router"
-import { Search, MapPin, TrendingUp, Shield, Phone, ChevronRight, Star, Building, Home as HomeIcon, Trees, Store } from "lucide-react"
+import { Search, MapPin, TrendingUp, ChevronRight, Star, Building, Home as HomeIcon, Trees, Store } from "lucide-react"
 import Navbar from "../Components/Layout/Navbar"
 import Footer from "../Components/Layout/Footer"
 import PropertyCard from "../Components/Property/PropertyCard"
