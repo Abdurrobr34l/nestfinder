@@ -96,7 +96,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             </span>
           </div>
           <Link
-            to={`/property/${property.id}`}
+            to={`/property/${property._id || property.id}`}
             className="text-sm bg-blue-800 text-white px-4 py-2 rounded-lg hover:bg-blue-900 transition-colors"
           >
             View Details

@@ -1,63 +1,85 @@
-import { createContext, useState } from "react"
-import type { User } from "../Types"
+import { createContext, useContext, useState, useEffect } from "react"
+import type { ReactNode } from "react"
+import axiosInstance from "../lib/axiosInstance"
 
-export interface AuthContextType {
-  user: User | null
-  login: (email: string, password: string) => boolean
-  logout: () => void
-  isAuthenticated: boolean
+interface User {
+  id: string
+  name: string
+  email: string
+  role: "user" | "admin"
+  avatar: string
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined)
+interface AuthContextType {
+  user: User | null
+  token: string | null
+  login: (email: string, password: string) => Promise<void>
+  register: (name: string, email: string, password: string) => Promise<void>
+  logout: () => void
+  isAuthenticated: boolean
+  isAdmin: boolean
+  loading: boolean
+}
 
-const demoUsers: User[] = [
-  {
-    id: "u1",
-    name: "Demo User",
-    email: "user@nestfinder.com",
-    role: "user",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100",
-    createdAt: "2024-01-01"
-  },
-  {
-    id: "u2",
-    name: "Demo Admin",
-    email: "admin@nestfinder.com",
-    role: "admin",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
-    createdAt: "2024-01-01"
-  }
-]
+const AuthContext = createContext<AuthContextType | null>(null)
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem("user")
-    return saved ? JSON.parse(saved) : null
+    const savedUser = localStorage.getItem("user")
+    return savedUser ? JSON.parse(savedUser) : null
   })
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem("token")
+  })
+  const [loading, setLoading] = useState(false)
 
-  const login = (email: string, password: string): boolean => {
-    const found = demoUsers.find(u => u.email === email)
-    if (found && password === "123456") {
-      setUser(found)
-      localStorage.setItem("user", JSON.stringify(found))
-      return true
-    }
-    return false
+  useEffect(() => {
+    setLoading(false)
+  }, [])
+
+  const login = async (email: string, password: string) => {
+    const res = await axiosInstance.post("/auth/login", { email, password })
+    const { token: newToken, user: newUser } = res.data.data
+    setToken(newToken)
+    setUser(newUser)
+    localStorage.setItem("token", newToken)
+    localStorage.setItem("user", JSON.stringify(newUser))
+  }
+
+  const register = async (name: string, email: string, password: string) => {
+    const res = await axiosInstance.post("/auth/register", { name, email, password })
+    const { token: newToken, user: newUser } = res.data.data
+    setToken(newToken)
+    setUser(newUser)
+    localStorage.setItem("token", newToken)
+    localStorage.setItem("user", JSON.stringify(newUser))
   }
 
   const logout = () => {
+    setToken(null)
     setUser(null)
+    localStorage.removeItem("token")
     localStorage.removeItem("user")
   }
 
   return (
     <AuthContext.Provider value={{
       user,
+      token,
       login,
+      register,
       logout,
-      isAuthenticated: !!user
+      isAuthenticated: !!user,
+      isAdmin: user?.role === "admin",
+      loading
     }}>
       {children}
     </AuthContext.Provider>
   )
+}
+
+export const useAuth = () => {
+  const context = useContext(AuthContext)
+  if (!context) throw new Error("useAuth must be used within AuthProvider")
+  return context
 }

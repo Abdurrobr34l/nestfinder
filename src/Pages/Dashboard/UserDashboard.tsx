@@ -1,27 +1,20 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router"
 import {
   Home, User, BookOpen, Star, LogOut,
   Menu, Edit, Save, Camera
 } from "lucide-react"
 import { useAuth } from "../../Hooks/useAuth"
-import { properties } from "../../Data/properties"
-import { reviews } from "../../Data/reviews"
+import { bookingAPI, reviewAPI, userAPI, propertyAPI } from "../../lib/api"
+import type { Booking, Review, Property } from "../../Types/index"
 
 type ActivePage = "overview" | "profile" | "bookings" | "reviews"
 
-// ─── Types for props ───────────────────────────────────────────────
 interface SidebarProps {
   activePage: ActivePage
   setActivePage: (page: ActivePage) => void
   setSidebarOpen: (open: boolean) => void
   onLogout: () => void
-}
-
-interface OverviewPageProps {
-  userName: string
-  userAvatar: string
-  reviewCount: number
 }
 
 interface ProfilePageProps {
@@ -32,9 +25,9 @@ interface ProfilePageProps {
   setProfileData: (v: ProfilePageProps["profileData"]) => void
   onSave: () => void
   saveSuccess: boolean
+  saveError: string
 }
 
-// ─── Sidebar (outside UserDashboard) ───────────────────────────────
 const navItems = [
   { id: "overview", label: "Overview", icon: <Home size={18} /> },
   { id: "profile", label: "My Profile", icon: <User size={18} /> },
@@ -44,7 +37,6 @@ const navItems = [
 
 const Sidebar = ({ activePage, setActivePage, setSidebarOpen, onLogout }: SidebarProps) => (
   <div className="flex flex-col h-full">
-    {/* Logo */}
     <Link
       to="/"
       className="flex items-center gap-2 p-6 border-b border-gray-200 dark:border-gray-700"
@@ -56,8 +48,6 @@ const Sidebar = ({ activePage, setActivePage, setSidebarOpen, onLogout }: Sideba
         Nest<span className="text-amber-500">Finder</span>
       </span>
     </Link>
-
-    {/* Nav */}
     <nav className="flex-1 p-4 space-y-1">
       {navItems.map(item => (
         <button
@@ -77,8 +67,6 @@ const Sidebar = ({ activePage, setActivePage, setSidebarOpen, onLogout }: Sideba
         </button>
       ))}
     </nav>
-
-    {/* Logout */}
     <div className="p-4 border-t border-gray-200 dark:border-gray-700">
       <button
         onClick={onLogout}
@@ -92,53 +80,58 @@ const Sidebar = ({ activePage, setActivePage, setSidebarOpen, onLogout }: Sideba
 )
 
 // ─── Overview Page ──────────────────────────────────────────────────
-const OverviewPage = ({ userName, reviewCount }: OverviewPageProps) => {
-  const featuredProperties = properties.filter(p => p.isFeatured).slice(0, 3)
+const OverviewPage = ({ userName }: { userName: string }) => {
+  const [featuredProperties, setFeaturedProperties] = useState<Property[]>([])
+  const [bookingCount, setBookingCount] = useState(0)
+  const [reviewCount, setReviewCount] = useState(0)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [propRes, bookRes, revRes] = await Promise.all([
+          propertyAPI.getFeatured(),
+          bookingAPI.getMyBookings(),
+          reviewAPI.getAll().catch(() => ({ data: { data: [] } }))
+        ])
+        setFeaturedProperties(propRes.data.data.slice(0, 3))
+        setBookingCount(bookRes.data.data.length)
+        setReviewCount(revRes.data.data.length)
+      } catch (error) {
+        console.error("Overview fetch error", error)
+      }
+    }
+    fetchData()
+  }, [])
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
         Welcome back, {userName}!
       </h1>
-
-      {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { label: "Saved Properties", value: "5", colorClass: "text-blue-800 dark:text-blue-400" },
-          { label: "Tour Bookings", value: "2", colorClass: "text-amber-700 dark:text-amber-400" },
+          { label: "Tour Bookings", value: bookingCount.toString(), colorClass: "text-amber-700 dark:text-amber-400" },
           { label: "Reviews Given", value: reviewCount.toString(), colorClass: "text-green-700 dark:text-green-400" },
+          { label: "Featured Listings", value: featuredProperties.length.toString(), colorClass: "text-blue-800 dark:text-blue-400" },
         ].map(stat => (
-          <div
-            key={stat.label}
-            className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-200 dark:border-gray-700"
-          >
+          <div key={stat.label} className="bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-200 dark:border-gray-700">
             <div className={`text-3xl font-bold mb-1 ${stat.colorClass}`}>{stat.value}</div>
             <div className="text-sm text-gray-500 dark:text-gray-400">{stat.label}</div>
           </div>
         ))}
       </div>
-
-      {/* Recent properties */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Featured Properties
-        </h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Featured Properties</h2>
         <div className="space-y-3">
           {featuredProperties.map(p => (
             <Link
-              key={p.id}
-              to={`/property/${p.id}`}
+              key={p._id}
+              to={`/property/${p._id}`}
               className="flex items-center gap-4 bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:border-blue-800 dark:hover:border-blue-400 transition-colors"
             >
-              <img
-                src={p.images[0]}
-                alt={p.title}
-                className="w-16 h-16 rounded-xl object-cover shrink-0"
-              />
+              <img src={p.images[0]} alt={p.title} className="w-16 h-16 rounded-xl object-cover shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-gray-900 dark:text-white text-sm truncate">
-                  {p.title}
-                </div>
+                <div className="font-medium text-gray-900 dark:text-white text-sm truncate">{p.title}</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400">{p.city}</div>
               </div>
               <div className="text-blue-800 dark:text-blue-400 font-semibold text-sm shrink-0">
@@ -154,13 +147,7 @@ const OverviewPage = ({ userName, reviewCount }: OverviewPageProps) => {
 
 // ─── Profile Page ───────────────────────────────────────────────────
 const ProfilePage = ({
-  user,
-  isEditing,
-  setIsEditing,
-  profileData,
-  setProfileData,
-  onSave,
-  saveSuccess,
+  user, isEditing, setIsEditing, profileData, setProfileData, onSave, saveSuccess, saveError
 }: ProfilePageProps) => (
   <div className="space-y-6">
     <div className="flex items-center justify-between">
@@ -170,35 +157,31 @@ const ProfilePage = ({
           onClick={() => setIsEditing(true)}
           className="flex items-center gap-2 bg-blue-800 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-900 transition-colors"
         >
-          <Edit size={16} />
-          Edit Profile
+          <Edit size={16} /> Edit Profile
         </button>
       ) : (
         <button
           onClick={onSave}
           className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-green-700 transition-colors"
         >
-          <Save size={16} />
-          Save Changes
+          <Save size={16} /> Save Changes
         </button>
       )}
     </div>
-
     {saveSuccess && (
       <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
         <p className="text-sm text-green-600 dark:text-green-400">Profile updated successfully!</p>
       </div>
     )}
-
+    {saveError && (
+      <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+        <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
+      </div>
+    )}
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
-      {/* Avatar */}
       <div className="flex items-center gap-4 mb-6">
         <div className="relative">
-          <img
-            src={user?.avatar}
-            alt={user?.name}
-            className="w-20 h-20 rounded-2xl object-cover"
-          />
+          <img src={user?.avatar} alt={user?.name} className="w-20 h-20 rounded-2xl object-cover" />
           {isEditing && (
             <button className="absolute -bottom-2 -right-2 p-1.5 bg-blue-800 text-white rounded-lg">
               <Camera size={14} />
@@ -213,38 +196,27 @@ const ProfilePage = ({
           </span>
         </div>
       </div>
-
-      {/* Fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {(
-          [
-            { label: "Full Name", key: "name", type: "text" },
-            { label: "Email", key: "email", type: "email" },
-            { label: "Phone", key: "phone", type: "text" },
-            { label: "City", key: "city", type: "text" },
-          ] as const
-        ).map(field => (
+        {([ 
+          { label: "Full Name", key: "name", type: "text" },
+          { label: "Email", key: "email", type: "email" },
+          { label: "Phone", key: "phone", type: "text" },
+          { label: "City", key: "city", type: "text" },
+        ] as const).map(field => (
           <div key={field.key}>
-            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">
-              {field.label}
-            </label>
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">{field.label}</label>
             {isEditing ? (
               <input
                 type={field.type}
                 value={profileData[field.key]}
-                onChange={e =>
-                  setProfileData({ ...profileData, [field.key]: e.target.value })
-                }
+                onChange={e => setProfileData({ ...profileData, [field.key]: e.target.value })}
                 className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white text-sm outline-none focus:border-blue-800 dark:focus:border-blue-400"
               />
             ) : (
-              <div className="text-sm font-medium text-gray-900 dark:text-white py-2">
-                {profileData[field.key]}
-              </div>
+              <div className="text-sm font-medium text-gray-900 dark:text-white py-2">{profileData[field.key] || "—"}</div>
             )}
           </div>
         ))}
-
         <div className="sm:col-span-2">
           <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Bio</label>
           {isEditing ? (
@@ -255,7 +227,7 @@ const ProfilePage = ({
               className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white text-sm outline-none resize-none focus:border-blue-800 dark:focus:border-blue-400"
             />
           ) : (
-            <div className="text-sm text-gray-600 dark:text-gray-300 py-2">{profileData.bio}</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300 py-2">{profileData.bio || "—"}</div>
           )}
         </div>
       </div>
@@ -264,87 +236,122 @@ const ProfilePage = ({
 )
 
 // ─── Bookings Page ──────────────────────────────────────────────────
-const BookingsPage = () => (
-  <div className="space-y-6">
-    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Bookings</h1>
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-      <div className="p-6 border-b border-gray-100 dark:border-gray-700">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Your tour bookings will appear here
-        </p>
-      </div>
-      {[0, 1].map(i => (
-        <div
-          key={i}
-          className="flex items-center gap-4 p-4 border-b border-gray-100 dark:border-gray-700 last:border-0"
-        >
-          <img
-            src={properties[i].images[0]}
-            alt=""
-            className="w-14 h-14 rounded-xl object-cover shrink-0"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="font-medium text-gray-900 dark:text-white text-sm truncate">
-              {properties[i].title}
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">{properties[i].city}</div>
-            <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-              Scheduled: 2024-04-{10 + i + 1}
-            </div>
-          </div>
-          <span
-            className={`text-xs font-medium px-3 py-1 rounded-lg ${
-              i === 0
-                ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                : "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400"
-            }`}
-          >
-            {i === 0 ? "Confirmed" : "Pending"}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-)
+const BookingsPage = () => {
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-// ─── Reviews Page ───────────────────────────────────────────────────
-interface ReviewsPageProps {
-  userId: string
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const res = await bookingAPI.getMyBookings()
+        setBookings(res.data.data)
+      } catch (error) {
+        console.error("Failed to fetch bookings", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchBookings()
+  }, [])
+
+  const statusColor: Record<string, string> = {
+    confirmed: "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400",
+    pending: "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400",
+    cancelled: "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
+  }
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Bookings</h1>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {isLoading ? (
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">Loading bookings...</div>
+        ) : bookings.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="text-4xl mb-3">📅</div>
+            <p className="text-gray-500 dark:text-gray-400">No bookings yet</p>
+            <Link to="/explore" className="inline-block mt-4 bg-blue-800 text-white px-5 py-2 rounded-xl text-sm hover:bg-blue-900 transition-colors">
+              Browse Properties
+            </Link>
+          </div>
+        ) : (
+          bookings.map(booking => (
+            <div key={booking._id} className="flex items-center gap-4 p-4 border-b border-gray-100 dark:border-gray-700 last:border-0">
+              <img
+                src={booking.propertyImage}
+                alt={booking.propertyTitle}
+                className="w-14 h-14 rounded-xl object-cover shrink-0"
+              />
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-gray-900 dark:text-white text-sm truncate">{booking.propertyTitle}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">{booking.bookingType}</div>
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                  Scheduled: {new Date(booking.scheduledDate).toLocaleDateString()}
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className={`text-xs font-medium px-3 py-1 rounded-lg capitalize ${statusColor[booking.status]}`}>
+                  {booking.status}
+                </span>
+                <div className="text-xs text-blue-800 dark:text-blue-400 font-semibold mt-1">
+                  ৳{booking.price.toLocaleString()}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
 }
 
-const ReviewsPage = ({ userId }: ReviewsPageProps) => {
-  const userReviews = reviews.filter(r => r.userId === userId)
+// ─── Reviews Page ───────────────────────────────────────────────────
+const ReviewsPage = () => {
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const { user } = useAuth()
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await reviewAPI.getAll()
+        const myReviews = res.data.data.filter((r: Review) => r.userId === user?.id)
+        setReviews(myReviews)
+      } catch (error) {
+        console.error("Failed to fetch reviews", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchReviews()
+  }, [user])
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Reviews</h1>
-      {userReviews.length === 0 ? (
+      {isLoading ? (
+        <div className="p-8 text-center text-gray-500 dark:text-gray-400 text-sm">Loading reviews...</div>
+      ) : reviews.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-12 text-center">
           <div className="text-4xl mb-3">⭐</div>
           <p className="text-gray-500 dark:text-gray-400">You haven't written any reviews yet</p>
-          <Link
-            to="/explore"
-            className="inline-block mt-4 bg-blue-800 text-white px-5 py-2 rounded-xl text-sm hover:bg-blue-900 transition-colors"
-          >
+          <Link to="/explore" className="inline-block mt-4 bg-blue-800 text-white px-5 py-2 rounded-xl text-sm hover:bg-blue-900 transition-colors">
             Browse Properties
           </Link>
         </div>
       ) : (
         <div className="space-y-4">
-          {userReviews.map(review => (
-            <div
-              key={review.id}
-              className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5"
-            >
+          {reviews.map(review => (
+            <div key={review._id} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5">
               <div className="flex items-center gap-1 mb-2">
-                {Array(review.rating)
-                  .fill(0)
-                  .map((_, i) => (
-                    <Star key={i} size={14} className="text-amber-500 fill-amber-500" />
-                  ))}
+                {Array(review.rating).fill(0).map((_, i) => (
+                  <Star key={i} size={14} className="text-amber-500 fill-amber-500" />
+                ))}
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{review.comment}</p>
-              <div className="text-xs text-gray-400 dark:text-gray-500">{review.createdAt}</div>
+              <div className="text-xs text-gray-400 dark:text-gray-500">
+                {new Date(review.createdAt).toLocaleDateString()}
+              </div>
             </div>
           ))}
         </div>
@@ -360,38 +367,62 @@ const UserDashboard = () => {
   const [activePage, setActivePage] = useState<ActivePage>("overview")
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState("")
   const [profileData, setProfileData] = useState({
     name: user?.name || "",
     email: user?.email || "",
-    phone: "+880 1700-000000",
-    city: "Dhaka",
-    bio: "Looking for a great property in Bangladesh.",
+    phone: "",
+    city: "",
+    bio: "",
   })
-  const [saveSuccess, setSaveSuccess] = useState(false)
+
+  // Load real profile data on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await userAPI.getById(user?.id || "")
+        const u = res.data.data
+        setProfileData({
+          name: u.name || "",
+          email: u.email || "",
+          phone: u.phone || "",
+          city: u.city || "",
+          bio: u.bio || "",
+        })
+      } catch (error) {
+        console.error("Failed to fetch profile", error)
+      }
+    }
+    if (user?.id) fetchProfile()
+  }, [user])
 
   const handleLogout = () => {
     logout()
     navigate("/")
   }
 
-  const handleSaveProfile = () => {
-    setIsEditing(false)
-    setSaveSuccess(true)
-    setTimeout(() => setSaveSuccess(false), 3000)
+  const handleSaveProfile = async () => {
+    setSaveError("")
+    try {
+      await userAPI.updateMyProfile({
+        name: profileData.name,
+        phone: profileData.phone,
+        city: profileData.city,
+        bio: profileData.bio,
+      })
+      setIsEditing(false)
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (error: any) {
+      setSaveError(error.response?.data?.message || "Failed to update profile")
+    }
   }
-
-  const userReviews = reviews.filter(r => r.userId === user?.id)
 
   const renderPage = () => {
     switch (activePage) {
       case "overview":
-        return (
-          <OverviewPage
-            userName={user?.name || ""}
-            userAvatar={user?.avatar || ""}
-            reviewCount={userReviews.length}
-          />
-        )
+        return <OverviewPage userName={user?.name || ""} />
       case "profile":
         return (
           <ProfilePage
@@ -402,70 +433,44 @@ const UserDashboard = () => {
             setProfileData={setProfileData}
             onSave={handleSaveProfile}
             saveSuccess={saveSuccess}
+            saveError={saveError}
           />
         )
       case "bookings":
         return <BookingsPage />
       case "reviews":
-        return <ReviewsPage userId={user?.id || ""} />
+        return <ReviewsPage />
     }
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
-
-      {/* Desktop sidebar */}
       <div className="hidden lg:flex w-64 shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col">
-        <Sidebar
-          activePage={activePage}
-          setActivePage={setActivePage}
-          setSidebarOpen={setSidebarOpen}
-          onLogout={handleLogout}
-        />
+        <Sidebar activePage={activePage} setActivePage={setActivePage} setSidebarOpen={setSidebarOpen} onLogout={handleLogout} />
       </div>
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
-            <Sidebar
-              activePage={activePage}
-              setActivePage={setActivePage}
-              setSidebarOpen={setSidebarOpen}
-              onLogout={handleLogout}
-            />
+            <Sidebar activePage={activePage} setActivePage={setActivePage} setSidebarOpen={setSidebarOpen} onLogout={handleLogout} />
           </div>
           <div className="flex-1 bg-black/50" onClick={() => setSidebarOpen(false)} />
         </div>
       )}
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-
-        {/* Top navbar */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
+          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
             <Menu size={20} className="text-gray-600 dark:text-gray-300" />
           </button>
           <div className="hidden lg:block">
             <span className="text-sm text-gray-500 dark:text-gray-400">User Dashboard</span>
           </div>
           <div className="flex items-center gap-3 ml-auto">
-            <img
-              src={user?.avatar}
-              alt={user?.name}
-              className="w-8 h-8 rounded-full object-cover"
-            />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">
-              {user?.name}
-            </span>
+            <img src={user?.avatar} alt={user?.name} className="w-8 h-8 rounded-full object-cover" />
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:block">{user?.name}</span>
           </div>
         </div>
-
-        {/* Page content */}
         <div className="flex-1 p-6 overflow-auto">{renderPage()}</div>
       </div>
     </div>
