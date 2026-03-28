@@ -10,6 +10,7 @@ import Login from "./Pages/Auth/Login"
 import Register from "./Pages/Auth/Register"
 import UserDashboard from "./Pages/Dashboard/UserDashboard"
 import AdminDashboard from "./Pages/Dashboard/AdminDashboard"
+import AIChatbot from "./Components/Ai/AIChatbot"
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth()
@@ -45,6 +46,8 @@ const App = () => {
         } />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+
+      <AIChatbot />
     </BrowserRouter>
   )
 }
