@@ -2,6 +2,7 @@ import type { Property } from "../Types"
 
 export const properties: Property[] = [
   {
+    _id: "1",
     id: "1",
     title: "Modern Apartment in Gulshan",
     description: "A beautiful modern apartment located in the heart of Gulshan, Dhaka. This spacious apartment features contemporary design with high-end finishes. Perfect for families or professionals looking for a comfortable living space in a prime location. The apartment is surrounded by restaurants, shopping centers, and excellent transport links.",
@@ -21,6 +22,7 @@ export const properties: Property[] = [
     bathrooms: 2,
     sqft: 1800,
     isFeatured: true,
+    rating: 4.5,
     owner: {
       id: "o1",
       name: "Rahman Ahmed",
@@ -31,6 +33,7 @@ export const properties: Property[] = [
     createdAt: "2024-01-15"
   },
   {
+    _id: "2",
     id: "2",
     title: "Luxury Villa in Dhanmondi",
     description: "Stunning luxury villa in the prestigious Dhanmondi area. This property offers exceptional living standards with a private garden, garage, and premium interiors. Ideal for large families who value space, privacy, and elegance. Close to top schools, hospitals, and shopping malls.",
@@ -50,6 +53,7 @@ export const properties: Property[] = [
     bathrooms: 4,
     sqft: 4500,
     isFeatured: true,
+    rating: 4.8,
     owner: {
       id: "o2",
       name: "Karim Hossain",
@@ -60,6 +64,7 @@ export const properties: Property[] = [
     createdAt: "2024-01-20"
   },
   {
+    _id: "3",
     id: "3",
     title: "Affordable Flat in Mirpur",
     description: "A cozy and affordable flat in Mirpur, perfect for small families or couples. The flat is located in a secure building with 24/7 security. Easy access to public transport, markets, and schools. A great option for those looking for budget-friendly housing in Dhaka.",
@@ -78,6 +83,7 @@ export const properties: Property[] = [
     bathrooms: 1,
     sqft: 900,
     isFeatured: false,
+    rating: 4.2,
     owner: {
       id: "o3",
       name: "Nasrin Begum",
@@ -88,6 +94,7 @@ export const properties: Property[] = [
     createdAt: "2024-02-01"
   },
   {
+    _id: "4",
     id: "4",
     title: "Commercial Space in Motijheel",
     description: "Prime commercial office space in Motijheel, the business hub of Dhaka. This space is ideal for corporate offices, banks, or retail businesses. The building has modern facilities including elevators, backup power, and parking. Excellent visibility and footfall in one of Dhaka's busiest areas.",
@@ -106,6 +113,7 @@ export const properties: Property[] = [
     bathrooms: 2,
     sqft: 2500,
     isFeatured: true,
+    rating: 4.6,
     owner: {
       id: "o4",
       name: "Iqbal Chowdhury",
@@ -116,6 +124,7 @@ export const properties: Property[] = [
     createdAt: "2024-02-10"
   },
   {
+    _id: "5",
     id: "5",
     title: "Sea View Apartment in Chittagong",
     description: "Breathtaking sea view apartment located in the beautiful port city of Chittagong. Wake up every morning to stunning views of the Bay of Bengal. This premium apartment features modern amenities, spacious rooms, and a large balcony. Perfect for those who love the ocean.",
@@ -134,6 +143,7 @@ export const properties: Property[] = [
     bathrooms: 2,
     sqft: 1600,
     isFeatured: true,
+    rating: 4.7,
     owner: {
       id: "o5",
       name: "Farhan Islam",
@@ -144,6 +154,7 @@ export const properties: Property[] = [
     createdAt: "2024-02-15"
   },
   {
+    _id: "6",
     id: "6",
     title: "Family House in Nasirabad",
     description: "Spacious family house in the quiet residential area of Nasirabad, Chittagong. This well-maintained property has a large garden, multiple living areas, and modern kitchen. The neighborhood is peaceful with good schools and parks nearby. Great for families seeking a calm lifestyle.",
@@ -162,6 +173,7 @@ export const properties: Property[] = [
     bathrooms: 3,
     sqft: 3200,
     isFeatured: false,
+    rating: 4.4,
     owner: {
       id: "o6",
       name: "Sultana Parvin",
@@ -172,6 +184,7 @@ export const properties: Property[] = [
     createdAt: "2024-02-20"
   },
   {
+    _id: "7",
     id: "7",
     title: "Tea Garden View Cottage in Sylhet",
     description: "Unique cottage with stunning views of lush tea gardens in Sylhet. This charming property is perfect for those who want to escape the city and enjoy nature. Surrounded by greenery, fresh air, and peaceful environment. Ideal as a vacation home or permanent residence for nature lovers.",
@@ -190,6 +203,7 @@ export const properties: Property[] = [
     bathrooms: 1,
     sqft: 1100,
     isFeatured: true,
+    rating: 4.9,
     owner: {
       id: "o7",
       name: "Aminul Islam",
@@ -200,6 +214,7 @@ export const properties: Property[] = [
     createdAt: "2024-03-01"
   },
   {
+    _id: "8",
     id: "8",
     title: "Modern Flat in Sylhet City",
     description: "Contemporary flat in the heart of Sylhet city. This modern apartment offers comfortable urban living with easy access to markets, restaurants, and transport. The building has modern security systems and backup power. Great for working professionals or small families.",
@@ -218,6 +233,7 @@ export const properties: Property[] = [
     bathrooms: 2,
     sqft: 1200,
     isFeatured: false,
+    rating: 4.3,
     owner: {
       id: "o8",
       name: "Ruksana Khatun",
@@ -228,6 +244,7 @@ export const properties: Property[] = [
     createdAt: "2024-03-05"
   },
   {
+    _id: "9",
     id: "9",
     title: "Budget Apartment in Rajshahi",
     description: "Affordable and comfortable apartment in Rajshahi city. This clean and well-maintained flat is perfect for students or young professionals. Located near Rajshahi University and major shopping areas. A great value-for-money option in one of Bangladesh's major cities.",
@@ -246,6 +263,7 @@ export const properties: Property[] = [
     bathrooms: 1,
     sqft: 850,
     isFeatured: false,
+    rating: 4.1,
     owner: {
       id: "o9",
       name: "Habibur Rahman",
@@ -256,6 +274,7 @@ export const properties: Property[] = [
     createdAt: "2024-03-10"
   },
   {
+    _id: "10",
     id: "10",
     title: "Land Plot in Rajshahi",
     description: "Prime land plot available for sale in a developing area of Rajshahi. This flat land is perfect for building your dream home or investment purposes. The area has good road connectivity and is rapidly developing with new infrastructure. A great long-term investment opportunity.",
@@ -274,6 +293,7 @@ export const properties: Property[] = [
     bathrooms: 0,
     sqft: 5000,
     isFeatured: false,
+    rating: 4.0,
     owner: {
       id: "o10",
       name: "Mozammel Haque",

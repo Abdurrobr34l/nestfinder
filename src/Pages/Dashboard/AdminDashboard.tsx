@@ -216,7 +216,7 @@ const OverviewPage = () => {
         <div className="flex flex-col sm:flex-row items-center gap-6">
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
-              <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+              <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
                 {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
               </Pie>
               <Tooltip />
@@ -248,29 +248,30 @@ const ManagePropertiesPage = () => {
   const [total, setTotal] = useState(0)
   const ITEMS_PER_PAGE = 5
 
-  const fetchProperties = async () => {
-    setIsLoading(true)
-    try {
-      const params: Record<string, string> = {
-        page: String(currentPage),
-        limit: String(ITEMS_PER_PAGE)
+  useEffect(() => {
+    const fetchProperties = async () => {
+      setIsLoading(true)
+      try {
+        const params: Record<string, string> = {
+          page: String(currentPage),
+          limit: String(ITEMS_PER_PAGE)
+        }
+        if (search) params.search = search
+        if (filterType !== "all") params.category = filterType
+        const res = await propertyAPI.getAll(params)
+        setProperties(res.data.data.data)
+        setTotal(res.data.data.meta.total)
+      } catch (error) {
+        console.error("Failed to fetch properties", error)
+      } finally {
+        setIsLoading(false)
       }
-      if (search) params.search = search
-      if (filterType !== "all") params.category = filterType
-      const res = await propertyAPI.getAll(params)
-      setProperties(res.data.data.data)
-      setTotal(res.data.data.meta.total)
-    } catch (error) {
-      console.error("Failed to fetch properties", error)
-    } finally {
-      setIsLoading(false)
     }
-  }
-
-  useEffect(() => { fetchProperties() }, [currentPage, filterType])
+    fetchProperties()
+  }, [currentPage, filterType, search])
 
   useEffect(() => {
-    const timer = setTimeout(() => { setCurrentPage(1); fetchProperties() }, 500)
+    const timer = setTimeout(() => { setCurrentPage(1) }, 500)
     return () => clearTimeout(timer)
   }, [search])
 
@@ -279,7 +280,7 @@ const ManagePropertiesPage = () => {
     try {
       await propertyAPI.delete(deleteId)
       setDeleteId(null)
-      fetchProperties()
+      // fetchProperties()
     } catch (error) {
       console.error("Failed to delete property", error)
     }
@@ -347,7 +348,7 @@ const ManagePropertiesPage = () => {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <img src={p.images[0]} alt="" className="w-10 h-10 rounded-xl object-cover shrink-0" />
-                        <span className="font-medium text-gray-900 dark:text-white truncate max-w-[160px]">{p.title}</span>
+                        <span className="font-medium text-gray-900 dark:text-white truncate max-w-40">{p.title}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{p.city}</td>
@@ -608,7 +609,7 @@ const AnalyticsPage = () => (
         <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Property Type Breakdown</h2>
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
-            <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+            <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}>
               {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
             </Pie>
             <Tooltip />
